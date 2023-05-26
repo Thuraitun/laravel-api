@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Api</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/all.min.css">
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-primary">
+        <div class="container" style="max-width: 600px">
+            <a href="#" class="navbar-brand">Cateogry Manager</a>
+        </div>
+    </nav>
+
+    <div class="container" style="max-width: 600px">
+        <div id="error" class="alert alert-warning mt-4 d-none">
+            Can't connect to api server
+        </div>
+        <div class="my-4 input-group">
+            <input type="text" placeholder="Name" class="form-control">
+            <button class="btn btn-primary">Add</button>
+        </div>
+        <ul id="list" class="list-group"></ul>
+    </div>
+
+    
+    <script>
+        const apiBase = "http://localhost:8000/api";
+        const token = "1|z0RvW4Oq9Qhj34UjE8J8EwwMSlUPZCxaUvFfMqwa";
+        
+        fetch(`${apiBase}/categories`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        })
+            .then(res => res.json())
+            .then(json => {
+                json.map(category => createElement(category.id, category.name)); 
+            })
+            .catch( () => {
+                document.querySelector("#error").classList.remove("d-none");
+                document.querySelector("#error").classList.add("d-block");
+        
+            });
+        
+        document.querySelector("button").onclick = () => {
+            const name = document.querySelector("input").value;
+            if(!name) return false;
+
+            fetch(`${apiBase}/categories`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ name }),
+            })
+            .then(res => res.json())
+            .then(json => {
+                createElement(json.id, json.name);
+            });
+
+            document.querySelector("input").value = "";
+            document.querySelector("input").focus();
+        }
+        
+        
+        function createElement(id,name) {
+            let li = document.createElement("li");
+            li.classList.add("list-group-item");
+            let span = document.createElement("span");
+            span.textContent = name;
+            li.appendChild(span);
+
+            let del = document.createElement("a");
+            del.setAttribute("href", "#");
+            del.classList.add("fas", "fa-trash", "text-danger", "float end");
+            del.onclick = () => {
+                del.parentElement.remove();
+                fetch(`${apiBase}/categories/${id}`, { method: 'DELETE' });
+            }
+
+            let edit =document.createElement("a");
+            edit.setAttribute("href", "#");
+            edit.classList.add("fas", "fa-edit", "float-end", "me-3");
+            edit.onclick = () => {
+                const update = prompt("Category name", name);
+                if(!update) return false;
+                li.querySelector("span").textContent = update;
+
+                fetch(`${apiBase}/categories/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body:JSON.stringify({ name: update }),
+                });
+            }
+
+            li.appendChild(edit);
+            li.appendChild(del);
+            
+            document.querySelector("#list").appendChild(li);
+
+
+        }
+        
+    </script>
+    
+</body>
+</html>
